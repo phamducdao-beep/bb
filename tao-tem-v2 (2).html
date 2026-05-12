@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tạo Tem DYB - 60×40mm</title>
+
+<!-- jsPDF: xuất PDF trực tiếp -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #f0f2f5;
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.container {
+  background: #fff; border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  padding: 36px 40px; width: 100%; max-width: 500px;
+}
+.header { text-align:center; margin-bottom:28px; }
+.badge {
+  display:inline-block; background:#111; color:#fff;
+  font-size:11px; letter-spacing:1.5px; text-transform:uppercase;
+  padding:4px 14px; border-radius:20px; margin-bottom:10px;
+}
+.header h1 { font-size:21px; font-weight:700; color:#111; }
+.header p { font-size:13px; color:#888; margin-top:5px; }
+label { display:block; font-size:13px; font-weight:600; color:#333; margin-bottom:6px; }
+.field { margin-bottom:18px; }
+input[type="text"], input[type="number"] {
+  width:100%; border:1.5px solid #e0e0e0; border-radius:8px;
+  padding:11px 14px; font-size:14px; color:#111;
+  transition:border-color .2s; outline:none; background:#fafafa;
+}
+input:focus { border-color:#111; background:#fff; }
+.row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.unit { position:relative; }
+.unit input { padding-right:40px; }
+.unit span {
+  position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  font-size:13px; color:#999; pointer-events:none;
+}
+hr.sep { border:none; border-top:1.5px dashed #ebebeb; margin:22px 0; }
+
+/* === Preview tem === */
+.preview-wrap { text-align:center; margin-bottom:24px; }
+.preview-label { font-size:11px; font-weight:600; color:#999; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:10px; }
+
+/* Tỉ lệ 60:40 → 270:180px */
+.tem {
+  width:270px; height:180px; border:2px solid #111; border-radius:3px;
+  margin:0 auto; background:#fff; display:flex; flex-direction:column;
+  overflow:hidden; font-family:'Segoe UI',sans-serif;
+}
+.tem-bar {
+  background:#111; color:#fff; text-align:center;
+  font-size:9.5px; font-weight:700; letter-spacing:2px;
+  padding:6px 0; flex-shrink:0; text-transform:uppercase;
+}
+.tem-body {
+  flex:1; display:flex; flex-direction:column;
+  justify-content:center; padding:0 16px; gap:0;
+}
+.tem-combo {
+  font-size:14px; font-weight:700; color:#111;
+  text-align:center; margin-bottom:9px; line-height:1.3;
+}
+.tem-divider {
+  border:none; border-top:1px dashed #ccc; margin-bottom:9px;
+}
+.tem-row {
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:11px; color:#222; margin-bottom:5px;
+}
+.tem-row b { font-weight:700; }
+
+/* === Nút === */
+.btn {
+  width:100%; border:none; border-radius:8px;
+  padding:13px; font-size:15px; font-weight:600;
+  cursor:pointer; transition:all .2s; letter-spacing:.3px;
+}
+.btn-main { background:#111; color:#fff; }
+.btn-main:hover { background:#333; }
+.btn-main:disabled { background:#bbb; cursor:not-allowed; }
+
+/* Alert */
+.alert {
+  padding:12px 16px; border-radius:8px; margin-bottom:16px;
+  font-size:13px; font-weight:500; display:none;
+}
+.alert.err { background:#fee2e2; color:#dc2626; display:block; }
+.alert.ok  { background:#dcfce7; color:#16a34a; display:block; }
+
+/* Hướng dẫn */
+.guide {
+  background:#f8f9fa; border-radius:10px;
+  padding:14px 16px; margin-top:18px;
+  font-size:12.5px; color:#555; line-height:1.9;
+}
+.guide strong { color:#111; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="badge">DYB</div>
+    <h1>Phần Mềm Tạo Tem In</h1>
+    <p>Khổ 60 × 40mm · Tiếng Việt đầy đủ</p>
+  </div>
+
+  <div id="alert" class="alert"></div>
+
+  <div class="field">
+    <label>🏷️ Tên Combo</label>
+    <input type="text" id="combo" placeholder="VD: Combo Vận Động Cơ Bản" value="Combo Vận Động">
+  </div>
+
+  <div class="row">
+    <div class="field unit">
+      <label>📏 Que Tròn</label>
+      <input type="number" id="que" placeholder="120" min="1" max="9999">
+      <span>cm</span>
+    </div>
+    <div class="field unit">
+      <label>📦 Cục Nâng</label>
+      <input type="number" id="cuc" placeholder="30" min="1" max="9999">
+      <span>cm</span>
+    </div>
+  </div>
+
+  <hr class="sep">
+
+  <div class="preview-wrap">
+    <div class="preview-label">Xem trước tem</div>
+    <div class="tem">
+      <div class="tem-bar">ĐẠO YÊU BODY - DYB</div>
+      <div class="tem-body">
+        <div class="tem-combo" id="p-combo">Combo Vận Động</div>
+        <hr class="tem-divider">
+        <div class="tem-row"><b>Que tròn:</b><span id="p-que">— cm</span></div>
+        <div class="tem-row"><b>Cục nâng:</b><span id="p-cuc">— cm</span></div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-main" id="btn" onclick="xuatPDF()">⬇️ Tạo & Tải File PDF</button>
+
+  <div class="guide">
+    <strong>Cách in tem:</strong><br>
+    1. Tải file PDF về → mở bằng Foxit hoặc Adobe<br>
+    2. <strong>File → Print</strong> → chọn máy in tem<br>
+    3. Khổ giấy: <strong>60 × 40mm</strong> (tự chỉnh nếu cần)<br>
+    4. Page Scaling: chọn <strong>None / Actual Size</strong><br>
+    5. Bấm Print ✅
+  </div>
+</div>
+
+<script>
+// Live preview
+['combo','que','cuc'].forEach(id => {
+  document.getElementById(id).addEventListener('input', preview);
+});
+
+function preview() {
+  const combo = document.getElementById('combo').value || 'Combo Vận Động';
+  const que   = document.getElementById('que').value;
+  const cuc   = document.getElementById('cuc').value;
+  document.getElementById('p-combo').textContent = combo;
+  document.getElementById('p-que').textContent   = que ? que + ' cm' : '— cm';
+  document.getElementById('p-cuc').textContent   = cuc ? cuc + ' cm' : '— cm';
+}
+
+function showAlert(msg, type) {
+  const el = document.getElementById('alert');
+  el.textContent = msg;
+  el.className = 'alert ' + type;
+  setTimeout(() => el.className = 'alert', 6000);
+}
+
+async function xuatPDF() {
+  const combo = document.getElementById('combo').value.trim() || 'Combo Vận Động';
+  const que   = document.getElementById('que').value.trim();
+  const cuc   = document.getElementById('cuc').value.trim();
+
+  if (!que || !cuc) {
+    showAlert('⚠️ Vui lòng nhập kích thước Que Tròn và Cục Nâng!', 'err');
+    return;
+  }
+
+  const btn = document.getElementById('btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang tạo PDF...';
+
+  try {
+    let svg;
+
+    // Thử gọi Claude API để sinh SVG
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 800,
+          messages: [{
+            role: 'user',
+            content: `Tạo SVG tem nhãn sản phẩm. Kích thước: viewBox="0 0 226.77 151.18" (= 60mm x 40mm).
+
+Thông tin:
+- Thương hiệu: ĐẠO YÊU BODY - DYB
+- Tên combo: ${combo}
+- Que tròn: ${que} cm
+- Cục nâng: ${cuc} cm
+
+Yêu cầu chính xác:
+- Nền trắng fill="white"
+- Thanh đen trên: rect y=0 height=28 fill="#111" + chữ trắng "ĐẠO YÊU BODY - DYB" font-size="10" bold căn giữa y=18
+- Tên combo: font-size="14" bold="#111" căn giữa, đặt ở y=62 (nếu 1 dòng) hoặc tách 2 dòng nếu dài
+- Đường kẻ ngang stroke-dasharray="4 3" màu "#ccc" từ x=14 đến x=212 ở y=80
+- Dòng 1: "Que tròn:" bold bên trái x=14 y=97, "${que} cm" bên phải x=212 y=97, font-size="10"
+- Dòng 2: "Cục nâng:" bold bên trái x=14 y=114, "${cuc} cm" bên phải x=212 y=114, font-size="10"
+- Viền ngoài: rect x=0.75 y=0.75 width=225.27 height=149.68 fill=none stroke="#111" stroke-width=1.5
+- Dùng font-family="Arial, Helvetica, sans-serif"
+- CHỈ trả về code SVG thuần từ thẻ <svg> đến </svg>, không có markdown`
+          }]
+        })
+      });
+      const data = await res.json();
+      let raw = data.content.map(b => b.text || '').join('').trim();
+      raw = raw.replace(/```[\w]*/g,'').replace(/```/g,'').trim();
+      if (raw.startsWith('<svg')) svg = raw;
+    } catch(_) {}
+
+    // Fallback: tự tạo SVG
+    if (!svg) svg = buildSVG(combo, que, cuc);
+
+    await taoPDFTuSVG(svg, combo);
+    showAlert('✅ Đã tải file PDF! Mở bằng Foxit hoặc Adobe để in tem.', 'ok');
+
+  } catch(e) {
+    console.error(e);
+    showAlert('❌ Có lỗi xảy ra: ' + e.message, 'err');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '⬇️ Tạo & Tải File PDF';
+}
+
+function buildSVG(combo, que, cuc) {
+  let lines = [];
+  if (combo.length <= 22) {
+    lines = [combo];
+  } else {
+    const mid = combo.lastIndexOf(' ', 22);
+    lines = mid > 0
+      ? [combo.slice(0, mid), combo.slice(mid + 1)]
+      : [combo.slice(0, 22), combo.slice(22)];
+  }
+
+  const comboSVG = lines.length === 1
+    ? `<text x="113.39" y="65" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="bold" fill="#111" text-anchor="middle">${lines[0]}</text>`
+    : `<text x="113.39" y="55" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="bold" fill="#111" text-anchor="middle">${lines[0]}</text>
+       <text x="113.39" y="72" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="bold" fill="#111" text-anchor="middle">${lines[1]}</text>`;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 226.77 151.18">
+  <rect width="226.77" height="151.18" fill="white"/>
+  <rect x="0" y="0" width="226.77" height="28" fill="#111"/>
+  <text x="113.39" y="18" font-family="Arial,Helvetica,sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle" letter-spacing="1">ĐẠO YÊU BODY - DYB</text>
+  ${comboSVG}
+  <line x1="14" y1="82" x2="212" y2="82" stroke="#ccc" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="14" y="97" font-family="Arial,Helvetica,sans-serif" font-size="10" font-weight="bold" fill="#222">Que tròn:</text>
+  <text x="212" y="97" font-family="Arial,Helvetica,sans-serif" font-size="10" fill="#222" text-anchor="end">${que} cm</text>
+  <text x="14" y="114" font-family="Arial,Helvetica,sans-serif" font-size="10" font-weight="bold" fill="#222">Cục nâng:</text>
+  <text x="212" y="114" font-family="Arial,Helvetica,sans-serif" font-size="10" fill="#222" text-anchor="end">${cuc} cm</text>
+  <rect x="0.75" y="0.75" width="225.27" height="149.68" fill="none" stroke="#111" stroke-width="1.5"/>
+</svg>`;
+}
+
+async function taoPDFTuSVG(svgStr, combo) {
+  const { jsPDF } = window.jspdf;
+
+  // Render SVG → Canvas (300 DPI: 60mm × 300/25.4 ≈ 709px, 40mm ≈ 472px)
+  const W = 709, H = 472;
+
+  const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  const img = new Image();
+  img.width  = W;
+  img.height = H;
+
+  await new Promise((resolve, reject) => {
+    img.onload = resolve;
+    img.onerror = reject;
+    img.src = url;
+  });
+
+  const canvas = document.createElement('canvas');
+  canvas.width  = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(img, 0, 0, W, H);
+  URL.revokeObjectURL(url);
+
+  const imgData = canvas.toDataURL('image/png');
+
+  // Tạo PDF khổ 60×40mm và nhúng ảnh vào
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: [60, 40]
+  });
+  doc.addImage(imgData, 'PNG', 0, 0, 60, 40);
+
+  const fileName = `tem-dyb-${combo.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+  doc.save(fileName);
+}
+</script>
+</body>
+</html>
